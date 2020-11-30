@@ -1,0 +1,25 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t rajivbhai/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true rajivbhai/react-test npm test
+
+after_success:
+  - docker build -t rajivbhai/multi-client ./client
+  - docker build -t rajivbhai/multi-nginx ./nginx
+  - docker build -t rajivbhai/multi-server ./server
+  - docker build -t rajivbhai/multi-worker ./worker
+
+  # Log into the docker CLI -- set it up within Travis CI as environment variables
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  # Take these production images and push them to docker hub
+  - docker push rajivbhai/multi-client
+  - docker push rajivbhai/multi-nginx
+  - docker push rajivbhai/multi-server
+  - docker push rajivbhai/multi-worker
